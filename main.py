@@ -7,8 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 import yfinance as yf
 import pandas as pd
 import math
+import time
+import random
 from datetime import datetime
 import os
+
+try:
+    from curl_cffi import requests as curl_requests
+    _HAS_CURL_CFFI = True
+except Exception:
+    _HAS_CURL_CFFI = False
 
 app = FastAPI(title="UB Scanner Invictus API")
 
@@ -18,6 +26,41 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_IMPERSONATES = ["chrome", "chrome120", "chrome116", "safari15_5", "edge99"]
+_CACHE_TTL_SEC = 300
+_stock_cache: dict[str, tuple[float, dict]] = {}
+_news_cache: dict[str, tuple[float, dict]] = {}
+
+def _make_session():
+    if not _HAS_CURL_CFFI:
+        return None
+    impersonate = random.choice(_IMPERSONATES)
+    try:
+        return curl_requests.Session(impersonate=impersonate)
+    except Exception:
+        try:
+            return curl_requests.Session(impersonate="chrome")
+        except Exception:
+            return None
+
+def _ticker(symbol: str):
+    sess = _make_session()
+    if sess is not None:
+        try:
+            return yf.Ticker(symbol, session=sess)
+        except TypeError:
+            pass
+    return yf.Ticker(symbol)
+
+def _cache_get(cache: dict, key: str):
+    entry = cache.get(key)
+    if entry and (time.time() - entry[0] < _CACHE_TTL_SEC):
+        return entry[1]
+    return None
+
+def _cache_put(cache: dict, key: str, value: dict):
+    cache[key] = (time.time(), value)
 
 def safe_get(d, key, default=None):
     v = d.get(key, default)
@@ -57,11 +100,29 @@ def health():
 @app.get("/stock/{ticker}")
 def get_stock(ticker: str):
     ticker = ticker.upper().strip()
+    cached = _cache_get(_stock_cache, ticker)
+    if cached is not None:
+        return cached
     try:
-        t = yf.Ticker(ticker)
-        info = t.info
+        info = None
+        t = None
+        last_err = None
+        for attempt in range(3):
+            try:
+                t = _ticker(ticker)
+                info = t.info
+                if info and (info.get("regularMarketPrice") is not None or info.get("currentPrice") is not None):
+                    break
+                last_err = "info vacío"
+            except Exception as e:
+                last_err = str(e)
+                if "rate" in last_err.lower() or "429" in last_err or "too many" in last_err.lower():
+                    time.sleep(1.5 * (attempt + 1))
+                    continue
+                raise
+            time.sleep(0.7 * (attempt + 1))
         if not info or (info.get("regularMarketPrice") is None and info.get("currentPrice") is None):
-            raise HTTPException(404, f"Ticker {ticker} no encontrado")
+            raise HTTPException(404, f"Ticker {ticker} no encontrado o rate-limited ({last_err})")
 
         price = safe_get(info, "currentPrice") or safe_get(info, "regularMarketPrice") or safe_get(info, "previousClose", 0)
         high52 = safe_get(info, "fiftyTwoWeekHigh", 0)
@@ -115,7 +176,7 @@ def get_stock(ticker: str):
         elif market_cap >= 300e6: cap_class = "SMALL-CAP"
         else: cap_class = "MICRO-CAP"
 
-        return {
+        result = {
             "ticker": ticker, "timestamp": datetime.now().isoformat(),
             "name": safe_get(info, "longName") or safe_get(info, "shortName") or ticker,
             "sector": safe_get(info, "sector", "N/D"),
@@ -137,6 +198,8 @@ def get_stock(ticker: str):
             "analyst_count": safe_get(info, "numberOfAnalystOpinions", 0),
             "business_summary": (safe_get(info, "longBusinessSummary", "") or "")[:500]
         }
+        _cache_put(_stock_cache, ticker, result)
+        return result
     except HTTPException:
         raise
     except Exception as e:
@@ -145,14 +208,20 @@ def get_stock(ticker: str):
 @app.get("/news/{ticker}")
 def get_news(ticker: str, limit: int = 5):
     ticker = ticker.upper().strip()
+    cache_key = f"{ticker}:{limit}"
+    cached = _cache_get(_news_cache, cache_key)
+    if cached is not None:
+        return cached
     try:
-        t = yf.Ticker(ticker)
+        t = _ticker(ticker)
         news = t.news or []
-        result = []
+        result_list = []
         for n in news[:limit]:
-            result.append({"title": n.get("title", ""), "publisher": n.get("publisher", ""),
+            result_list.append({"title": n.get("title", ""), "publisher": n.get("publisher", ""),
                           "link": n.get("link", ""), "published": n.get("providerPublishTime")})
-        return {"ticker": ticker, "news": result}
+        payload = {"ticker": ticker, "news": result_list}
+        _cache_put(_news_cache, cache_key, payload)
+        return payload
     except Exception as e:
         return {"ticker": ticker, "news": [], "error": str(e)}
 
