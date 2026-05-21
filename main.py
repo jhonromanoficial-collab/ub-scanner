@@ -27,25 +27,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_IMPERSONATES = ["chrome", "chrome120", "chrome116", "safari15_5", "edge99"]
-_CACHE_TTL_SEC = 300
+_IMPERSONATES = ["chrome", "chrome120", "chrome116", "chrome110", "chrome107",
+                 "safari15_5", "safari17_0", "edge99", "edge101", "firefox133"]
+_CACHE_TTL_SEC = 900
+_MAX_RETRIES = 5
 _stock_cache: dict[str, tuple[float, dict]] = {}
 _news_cache: dict[str, tuple[float, dict]] = {}
 
-def _make_session():
+def _make_session(impersonate: str | None = None):
     if not _HAS_CURL_CFFI:
         return None
-    impersonate = random.choice(_IMPERSONATES)
+    imp = impersonate or random.choice(_IMPERSONATES)
     try:
-        return curl_requests.Session(impersonate=impersonate)
+        return curl_requests.Session(impersonate=imp)
     except Exception:
         try:
             return curl_requests.Session(impersonate="chrome")
         except Exception:
             return None
 
-def _ticker(symbol: str):
-    sess = _make_session()
+def _ticker(symbol: str, impersonate: str | None = None):
+    sess = _make_session(impersonate)
     if sess is not None:
         try:
             return yf.Ticker(symbol, session=sess)
@@ -107,22 +109,22 @@ def get_stock(ticker: str):
         info = None
         t = None
         last_err = None
-        for attempt in range(3):
+        impersonates_to_try = random.sample(_IMPERSONATES, min(_MAX_RETRIES, len(_IMPERSONATES)))
+        for attempt, imp in enumerate(impersonates_to_try):
             try:
-                t = _ticker(ticker)
+                t = _ticker(ticker, impersonate=imp)
                 info = t.info
                 if info and (info.get("regularMarketPrice") is not None or info.get("currentPrice") is not None):
                     break
                 last_err = "info vacío"
             except Exception as e:
                 last_err = str(e)
-                if "rate" in last_err.lower() or "429" in last_err or "too many" in last_err.lower():
-                    time.sleep(1.5 * (attempt + 1))
-                    continue
-                raise
-            time.sleep(0.7 * (attempt + 1))
+            is_rate_limit = last_err and ("rate" in last_err.lower() or "429" in last_err or "too many" in last_err.lower())
+            if attempt < len(impersonates_to_try) - 1:
+                backoff = (2.0 * (attempt + 1)) + random.uniform(0, 1.5)
+                time.sleep(backoff if is_rate_limit else 0.5)
         if not info or (info.get("regularMarketPrice") is None and info.get("currentPrice") is None):
-            raise HTTPException(404, f"Ticker {ticker} no encontrado o rate-limited ({last_err})")
+            raise HTTPException(503, f"Yahoo rate-limited este ticker ({ticker}). Probá de nuevo en 30s. Detalle: {last_err}")
 
         price = safe_get(info, "currentPrice") or safe_get(info, "regularMarketPrice") or safe_get(info, "previousClose", 0)
         high52 = safe_get(info, "fiftyTwoWeekHigh", 0)
