@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultra Black · Scanner Invictus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000; --card:#0a0a0a; --card2:#111; --line:#1c1c1c;
+    --cyan:#00e5ff; --cyan2:#00b8d4; --cyan-dim:rgba(0,229,255,.1);
+    --white:#fff; --muted:#666; --soft:#9a9a9a;
+    --green:#00ff88; --red:#ff3366; --yellow:#ffcc00;
+    --mono:'JetBrains Mono',monospace;
+    --sans:'Space Grotesk',-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+  body{
+    font-family:var(--sans);background:var(--bg);color:var(--white);
+    min-height:100vh;padding:24px;
+    background-image:
+      radial-gradient(circle at 15% 0%,rgba(0,229,255,.09),transparent 42%),
+      radial-gradient(circle at 85% 100%,rgba(0,229,255,.05),transparent 50%);
+  }
+  .container{max-width:1180px;margin:0 auto}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#000,#1a1a1a);border:1px solid var(--cyan);display:flex;align-items:center;justify-content:center;color:var(--cyan);font-weight:800;font-size:18px;font-family:var(--mono);box-shadow:0 0 20px rgba(0,229,255,.3)}
+  .brand h1{font-size:17px;font-weight:700;letter-spacing:-.3px}
+  .brand p{color:var(--muted);font-size:11px;margin-top:1px;letter-spacing:1px;font-family:var(--mono)}
+  .live-badge{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px;font-size:12px;color:var(--soft)}
+  .dot{width:7px;height:7px;background:var(--cyan);border-radius:50%;box-shadow:0 0 10px var(--cyan);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .config-bar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:center;font-size:12px;flex-wrap:wrap}
+  .config-bar label{color:var(--muted);font-family:var(--mono);font-size:11px}
+  .config-bar input{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--line);color:var(--cyan);padding:8px 12px;border-radius:8px;font-family:var(--mono);font-size:12px}
+  .config-bar input:focus{outline:none;border-color:var(--cyan)}
+  .config-bar button{background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--cyan);padding:8px 14px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer;font-family:var(--mono);text-transform:uppercase}
+  .config-status{font-family:var(--mono);font-size:11px}
+  .config-status.ok{color:var(--green)} .config-status.err{color:var(--red)}
+  .search-box{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:20px;padding:28px;margin-bottom:24px;position:relative;overflow:hidden}
+  .search-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+  .search-label{color:var(--cyan);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;font-family:var(--mono)}
+  .search-row{display:flex;gap:12px;align-items:stretch}
+  .ticker-input{flex:1;background:var(--bg);border:1px solid var(--line);color:var(--white);padding:18px 24px;border-radius:14px;font-size:30px;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-family:var(--mono);transition:all .2s}
+  .ticker-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 4px rgba(0,229,255,.15)}
+  .ticker-input::placeholder{color:var(--muted)}
+  .scan-btn{background:var(--cyan);color:#000;border:none;padding:0 30px;border-radius:14px;font-weight:800;cursor:pointer;font-size:14px;letter-spacing:1px;transition:all .2s;text-transform:uppercase;font-family:var(--mono)}
+  .scan-btn:hover{background:var(--white);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,229,255,.3)}
+  .scan-btn:disabled{opacity:.5;cursor:wait}
+  .quick-tickers{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+  .quick-tickers button{background:transparent;color:var(--soft);border:1px solid var(--line);padding:5px 10px;border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s}
+  .quick-tickers button:hover{border-color:var(--cyan);color:var(--cyan)}
+  .loading{display:none;text-align:center;padding:60px 20px;color:var(--cyan);font-family:var(--mono);font-size:14px}
+  .loading.active{display:block}
+  .loading .spin{display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-box{display:none;background:rgba(255,51,102,.1);border:1px solid var(--red);border-radius:14px;padding:20px;color:var(--red);margin-bottom:20px;font-family:var(--mono);font-size:13px}
+  .error-box.active{display:block}
+  .results{display:none}
+  .results.active{display:block}
+  .decision-hero{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:20px;padding:32px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1.1fr;gap:28px}
+  .stock-info h2{font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:var(--mono)}
+  .stock-ticker{font-size:52px;font-weight:800;letter-spacing:-2px;line-height:1;margin-top:6px;font-family:var(--mono)}
+  .stock-name{color:var(--soft);font-size:13px;margin-top:8px}
+  .stock-tags{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .tag{background:var(--cyan-dim);color:var(--cyan);padding:5px 12px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:1px;border:1px solid rgba(0,229,255,.2);font-family:var(--mono);text-transform:uppercase}
+  .price-row{display:flex;gap:24px;margin-top:22px;align-items:baseline;flex-wrap:wrap}
+  .current-price{font-size:40px;font-weight:800;color:var(--cyan);font-family:var(--mono);letter-spacing:-1px}
+  .price-range{color:var(--muted);font-size:12px;line-height:1.7;font-family:var(--mono)}
+  .decision-block{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border-left:1px solid var(--line);padding-left:28px}
+  .decision-label{color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;font-family:var(--mono)}
+  .decision-big{font-size:46px;font-weight:800;letter-spacing:-1px;line-height:1;padding:22px 36px;border-radius:18px;width:100%;font-family:var(--mono)}
+  .decision-big.buy{background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,255,136,.05));color:var(--green);border:2px solid var(--green);text-shadow:0 0 30px rgba(0,255,136,.5)}
+  .decision-big.wait{background:linear-gradient(135deg,rgba(255,204,0,.15),rgba(255,204,0,.05));color:var(--yellow);border:2px solid var(--yellow);text-shadow:0 0 30px rgba(255,204,0,.4)}
+  .decision-big.avoid{background:linear-gradient(135deg,rgba(255,51,102,.15),rgba(255,51,102,.05));color:var(--red);border:2px solid var(--red);text-shadow:0 0 30px rgba(255,51,102,.4)}
+  .decision-reason{color:var(--soft);font-size:13px;margin-top:16px;line-height:1.5}
+  .mos-badge{margin-top:14px;padding:10px 18px;background:var(--bg);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--soft);font-family:var(--mono)}
+  .mos-badge .mos-val{color:var(--cyan);font-weight:800;font-size:18px;margin-left:6px;font-family:var(--mono)}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .kpi-label{color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;font-family:var(--mono)}
+  .kpi-value{font-size:23px;font-weight:800;margin-top:6px;letter-spacing:-.5px;font-family:var(--mono)}
+  .kpi-sub{color:var(--soft);font-size:11px;margin-top:4px;font-family:var(--mono)}
+  .kpi-sub.ok{color:var(--green)} .kpi-sub.bad{color:var(--red)} .kpi-sub.warn{color:var(--yellow)}
+  .section{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px;margin-bottom:20px}
+  .section-head{margin-bottom:20px}
+  .section-title{font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:var(--mono)}
+  .section-h{font-size:21px;font-weight:700;margin-top:4px;letter-spacing:-.5px}
+  .section-desc{color:var(--muted);font-size:13px;margin-top:6px}
+  .dcf-wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .wacc-panel{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .wacc-explain{background:rgba(0,229,255,.06);border-left:3px solid var(--cyan);border-radius:8px;padding:14px 16px;margin-bottom:22px}
+  .wacc-explain .we-title{color:var(--cyan);font-size:12px;font-weight:700;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+  .wacc-explain .we-text{color:var(--soft);font-size:12.5px;line-height:1.6}
+  .wacc-value-display{text-align:center;margin-bottom:16px}
+  .wacc-value-display .wvd-num{font-size:56px;font-weight:800;color:var(--cyan);font-family:var(--mono);line-height:1;text-shadow:0 0 30px rgba(0,229,255,.4)}
+  .wacc-value-display .wvd-label{color:var(--muted);font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-top:6px}
+  .slider-wrap{padding:8px 4px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red));border-radius:8px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;border-radius:50%;background:var(--cyan);cursor:pointer;border:3px solid #000;box-shadow:0 0 16px rgba(0,229,255,.7)}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--cyan);cursor:pointer;border:3px solid #000;box-shadow:0 0 16px rgba(0,229,255,.7)}
+  .slider-marks{display:flex;justify-content:space-between;margin-top:8px;color:var(--muted);font-size:10px;font-family:var(--mono)}
+  .wacc-presets{display:flex;gap:8px;margin-top:18px}
+  .wacc-presets button{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--soft);padding:8px;border-radius:8px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s}
+  .wacc-presets button:hover{border-color:var(--cyan);color:var(--cyan)}
+  .dcf-result{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;justify-content:center}
+  .result-final{text-align:center;padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .result-final-label{color:var(--cyan);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;font-family:var(--mono)}
+  .result-final-val{font-size:46px;font-weight:800;color:var(--cyan);margin:8px 0;letter-spacing:-1px;text-shadow:0 0 30px rgba(0,229,255,.4);font-family:var(--mono)}
+  .result-vs{display:flex;justify-content:space-around;padding-top:18px}
+  .result-vs-item{text-align:center}
+  .result-vs-item .lbl{color:var(--muted);font-size:10px;letter-spacing:.5px;text-transform:uppercase;font-family:var(--mono)}
+  .result-vs-item .val{font-size:18px;font-weight:700;margin-top:4px;font-family:var(--mono)}
+  .auto-note{margin-top:16px;color:var(--muted);font-size:11px;font-family:var(--mono);text-align:center;line-height:1.5}
+  .proj-tabs{display:flex;gap:8px;margin-bottom:18px}
+  .proj-tabs button{background:var(--card2);border:1px solid var(--line);color:var(--soft);padding:8px 18px;border-radius:8px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .15s;font-weight:700}
+  .proj-tabs button.active{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
+  .chart-box{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .chart-bars{display:flex;align-items:flex-end;gap:6px;height:160px;margin-bottom:10px}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px}
+  .bar{width:100%;background:linear-gradient(180deg,var(--cyan),var(--cyan2));border-radius:6px 6px 0 0;min-height:4px;position:relative;transition:height .6s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 12px rgba(0,229,255,.3)}
+  .bar.dim{background:linear-gradient(180deg,#1c4a52,#13343a);box-shadow:none}
+  .bar-val{color:var(--cyan);font-size:10px;font-family:var(--mono);font-weight:700}
+  .bar-yr{color:var(--muted);font-size:10px;font-family:var(--mono)}
+  .chart-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+  .cs-item{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center}
+  .cs-label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+  .cs-val{color:var(--cyan);font-size:20px;font-weight:800;font-family:var(--mono);margin-top:4px}
+  .cs-sub{color:var(--soft);font-size:10px;font-family:var(--mono);margin-top:2px}
+  .ind-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .ind-box{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .ind-box .ind-name{color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;font-family:var(--mono)}
+  .ind-box .ind-val{font-size:21px;font-weight:800;margin-top:6px;font-family:var(--mono)}
+  .ind-box .ind-check{display:inline-block;margin-top:8px;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:6px;font-family:var(--mono)}
+  .check-ok{background:rgba(0,255,136,.15);color:var(--green)}
+  .check-bad{background:rgba(255,51,102,.15);color:var(--red)}
+  .check-warn{background:rgba(255,204,0,.15);color:var(--yellow)}
+  footer{text-align:center;color:var(--muted);font-size:11px;margin-top:28px;padding:20px;line-height:1.8;font-family:var(--mono)}
+  footer strong{color:var(--cyan)}
+
+  /* MOAT */
+  .moat-card{background:linear-gradient(135deg,rgba(0,229,255,.07),rgba(0,229,255,.02));border:1px solid var(--cyan);border-radius:20px;padding:26px;margin-bottom:20px;position:relative;overflow:hidden}
+  .moat-card::before{content:'🏰';position:absolute;right:22px;top:18px;font-size:46px;opacity:.14}
+  .moat-label{color:var(--cyan);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px}
+  .moat-level{font-size:30px;font-weight:800;font-family:var(--mono);letter-spacing:-1px}
+  .moat-level.amplio{color:var(--green);text-shadow:0 0 24px rgba(0,255,136,.4)}
+  .moat-level.moderado{color:var(--cyan);text-shadow:0 0 24px rgba(0,229,255,.4)}
+  .moat-level.estrecho{color:var(--yellow);text-shadow:0 0 24px rgba(255,204,0,.4)}
+  .moat-level.nulo{color:var(--red);text-shadow:0 0 24px rgba(255,51,102,.4)}
+  .moat-desc{color:var(--soft);font-size:13.5px;line-height:1.6;margin-top:10px;max-width:90%}
+  .moat-bar-wrap{margin-top:18px}
+  .moat-bar-track{height:10px;background:var(--bg);border-radius:8px;border:1px solid var(--line);overflow:hidden}
+  .moat-bar-fill{height:100%;background:linear-gradient(90deg,var(--cyan2),var(--cyan));border-radius:8px;transition:width .8s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 14px rgba(0,229,255,.5)}
+  .moat-bar-label{display:flex;justify-content:space-between;margin-top:6px;color:var(--muted);font-size:10px;font-family:var(--mono)}
+  .moat-signals{margin-top:16px;display:flex;flex-direction:column;gap:7px}
+  .moat-signal{display:flex;align-items:flex-start;gap:8px;color:var(--soft);font-size:12px;line-height:1.4}
+  .moat-signal::before{content:'✓';color:var(--green);font-weight:800;font-family:var(--mono);flex-shrink:0}
+
+  /* FRASES */
+  .quote-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 28px;margin-bottom:16px;position:relative}
+  .quote-card.cyan-border{border-color:rgba(0,229,255,.35)}
+  .quote-mark{font-size:42px;color:var(--cyan);font-family:Georgia,serif;line-height:.6;opacity:.5}
+  .quote-text{font-size:17px;font-weight:600;line-height:1.5;margin:8px 0 10px;font-style:italic}
+  .quote-author{color:var(--cyan);font-size:12px;font-weight:700;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase}
+  .quotes-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+
+  /* DISCLAIMER */
+  .disclaimer{color:var(--muted);font-size:10px;line-height:1.6;text-align:center;max-width:760px;margin:0 auto;padding:16px;border-top:1px solid var(--line);font-family:var(--sans)}
+  @media (max-width:880px){
+    .decision-hero{grid-template-columns:1fr}
+    .decision-block{border-left:none;border-top:1px solid var(--line);padding-left:0;padding-top:22px}
+    .dcf-wrap{grid-template-columns:1fr}
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .ind-grid{grid-template-columns:repeat(2,1fr)}
+    .quotes-row{grid-template-columns:1fr}
+    .stock-ticker{font-size:40px}
+    .decision-big{font-size:34px;padding:18px 22px}
+    .ticker-input{font-size:22px;padding:14px 18px}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <div class="logo">UB</div>
+      <div>
+        <h1>ULTRA BLACK · SCANNER INVICTUS</h1>
+        <p>DCF BUFFETT · DATA EN VIVO</p>
+      </div>
+    </div>
+    <div class="live-badge">
+      <div class="dot"></div>
+      <div>
+        <div style="font-weight:700;font-family:var(--mono);font-size:11px">YFINANCE LIVE</div>
+        <div style="color:var(--muted);font-size:10px;font-family:var(--mono)" id="ts">--</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="config-bar">
+    <label>API URL:</label>
+    <input type="text" id="apiUrl" placeholder="https://tu-backend.onrender.com" value="">
+    <button onclick="saveApi()">GUARDAR</button>
+    <span class="config-status" id="apiStatus">⚠ Configurá tu URL de Render</span>
+  </div>
+
+  <div class="search-box">
+    <div class="search-label">→ INGRESÁ TICKER</div>
+    <div class="search-row">
+      <input type="text" class="ticker-input" id="tickerInput" placeholder="CGAU" maxlength="6">
+      <button class="scan-btn" id="scanBtn" onclick="scanTicker()">⚡ ESCANEAR</button>
+    </div>
+    <div class="quick-tickers">
+      <button onclick="quickScan('CGAU')">CGAU</button>
+      <button onclick="quickScan('AAPL')">AAPL</button>
+      <button onclick="quickScan('MSFT')">MSFT</button>
+      <button onclick="quickScan('GOOGL')">GOOGL</button>
+      <button onclick="quickScan('NVDA')">NVDA</button>
+      <button onclick="quickScan('KO')">KO</button>
+      <button onclick="quickScan('JNJ')">JNJ</button>
+      <button onclick="quickScan('PG')">PG</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spin"></div>
+    <div>Trayendo datos en vivo de Yahoo Finance...</div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="results" id="results">
+    <div class="decision-hero">
+      <div class="stock-info">
+        <h2>ACCIÓN ANALIZADA</h2>
+        <div class="stock-ticker" id="stockTicker">--</div>
+        <div class="stock-name" id="stockName">--</div>
+        <div class="stock-tags" id="stockTags"></div>
+        <div class="price-row">
+          <div>
+            <div style="color:var(--muted);font-size:11px;letter-spacing:1px;font-family:var(--mono)">PRECIO</div>
+            <div class="current-price" id="currentPrice">--</div>
+          </div>
+          <div class="price-range" id="priceRange">--</div>
+        </div>
+      </div>
+      <div class="decision-block">
+        <div class="decision-label">VEREDICTO INVICTUS</div>
+        <div class="decision-big wait" id="decisionBig">--</div>
+        <div class="decision-reason" id="decisionReason">--</div>
+        <div class="mos-badge">Margen de seguridad: <span class="mos-val" id="mosVal">--</span></div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">P/E (TTM)</div><div class="kpi-value" id="kpiPE">--</div><div class="kpi-sub" id="kpiPESub">--</div></div>
+      <div class="kpi"><div class="kpi-label">EPS (TTM)</div><div class="kpi-value" id="kpiEPS">--</div><div class="kpi-sub" id="kpiEPSSub">--</div></div>
+      <div class="kpi"><div class="kpi-label">Dividendo</div><div class="kpi-value" id="kpiDiv">--</div><div class="kpi-sub" id="kpiDivSub">--</div></div>
+      <div class="kpi"><div class="kpi-label">Market Cap</div><div class="kpi-value" id="kpiCap">--</div><div class="kpi-sub" id="kpiCapSub">--</div></div>
+    </div>
+
+    <!-- MOAT -->
+    <div class="moat-card">
+      <div class="moat-label">🏰 MOAT · VENTAJA COMPETITIVA</div>
+      <div class="moat-level" id="moatLevel">--</div>
+      <div class="moat-desc" id="moatDesc">--</div>
+      <div class="moat-bar-wrap">
+        <div class="moat-bar-track"><div class="moat-bar-fill" id="moatBar" style="width:0%"></div></div>
+        <div class="moat-bar-label">
+          <span>Sin foso</span>
+          <span id="moatScoreTxt">0 / 9</span>
+          <span>Foso ancho</span>
+        </div>
+      </div>
+      <div class="moat-signals" id="moatSignals"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">⚡ VALORACIÓN</div>
+        <div class="section-h">DCF Buffett · Valor Intrínseco</div>
+        <div class="section-desc">Todos los datos se cargan automáticos. Solo ajustás el WACC.</div>
+      </div>
+      <div class="dcf-wrap">
+        <div class="wacc-panel">
+          <div class="wacc-explain">
+            <div class="we-title">¿Qué es el WACC?</div>
+            <div class="we-text">Es la <strong>tasa de exigencia</strong>: el retorno mínimo que le pedís a la empresa. Más alto = más conservador (castigás más el futuro). Buffett usa 9–11% para empresas sólidas. Movés el slider y el valor intrínseco se recalcula al instante.</div>
+          </div>
+          <div class="wacc-value-display">
+            <div class="wvd-num" id="waccDisplay">10.0%</div>
+            <div class="wvd-label">Tasa de descuento aplicada</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="waccSlider" min="6" max="15" step="0.5" value="10">
+            <div class="slider-marks">
+              <span>6% · agresivo</span>
+              <span>10% · Buffett</span>
+              <span>15% · ultra estricto</span>
+            </div>
+          </div>
+          <div class="wacc-presets">
+            <button onclick="setWacc(8)">Conservador 8%</button>
+            <button onclick="setWacc(10)">Buffett 10%</button>
+            <button onclick="setWacc(12)">Estricto 12%</button>
+          </div>
+        </div>
+        <div class="dcf-result">
+          <div class="result-final">
+            <div class="result-final-label">VALOR INTRÍNSECO POR ACCIÓN</div>
+            <div class="result-final-val" id="intrinsicVal">$0.00</div>
+          </div>
+          <div class="result-vs">
+            <div class="result-vs-item"><div class="lbl">Mercado</div><div class="val" id="resMarket">$0.00</div></div>
+            <div class="result-vs-item"><div class="lbl">Diferencia</div><div class="val" id="resDiff">$0.00</div></div>
+            <div class="result-vs-item"><div class="lbl">M. Seguridad</div><div class="val" id="resMos">0%</div></div>
+          </div>
+          <div class="auto-note" id="autoNote">Datos automáticos: FCF, acciones y caja neta desde Yahoo Finance</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="divSection">
+      <div class="section-head">
+        <div class="section-title">📈 PROYECCIÓN</div>
+        <div class="section-h">Dividendos a Futuro</div>
+        <div class="section-desc">Cuánto cobrarías por acción cada año, proyectando el crecimiento histórico</div>
+      </div>
+      <div class="proj-tabs">
+        <button id="divTab5" class="active" onclick="setDivYears(5)">5 AÑOS</button>
+        <button id="divTab10" onclick="setDivYears(10)">10 AÑOS</button>
+      </div>
+      <div class="chart-box">
+        <div class="chart-bars" id="divChart"></div>
+        <div class="chart-summary">
+          <div class="cs-item"><div class="cs-label">Dividendo hoy</div><div class="cs-val" id="divNow">--</div><div class="cs-sub">por acción / año</div></div>
+          <div class="cs-item"><div class="cs-label">Dividendo año final</div><div class="cs-val" id="divEnd">--</div><div class="cs-sub" id="divEndYr">--</div></div>
+          <div class="cs-item"><div class="cs-label">Total acumulado</div><div class="cs-val" id="divTotal">--</div><div class="cs-sub">suma del período</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="epsSection">
+      <div class="section-head">
+        <div class="section-title">📊 PROYECCIÓN</div>
+        <div class="section-h">EPS — Ganancia por Acción a Futuro</div>
+        <div class="section-desc">Cómo crece la ganancia por acción, usando la tasa de crecimiento de la empresa</div>
+      </div>
+      <div class="proj-tabs">
+        <button id="epsTab5" class="active" onclick="setEpsYears(5)">5 AÑOS</button>
+        <button id="epsTab10" onclick="setEpsYears(10)">10 AÑOS</button>
+      </div>
+      <div class="chart-box">
+        <div class="chart-bars" id="epsChart"></div>
+        <div class="chart-summary">
+          <div class="cs-item"><div class="cs-label">EPS hoy</div><div class="cs-val" id="epsNow">--</div><div class="cs-sub">por acción</div></div>
+          <div class="cs-item"><div class="cs-label">EPS año final</div><div class="cs-val" id="epsEnd">--</div><div class="cs-sub" id="epsEndYr">--</div></div>
+          <div class="cs-item"><div class="cs-label">Crecimiento total</div><div class="cs-val" id="epsGrowthTotal">--</div><div class="cs-sub">acumulado del período</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="fcfSection">
+      <div class="section-head">
+        <div class="section-title">💰 HISTÓRICO</div>
+        <div class="section-h">Free Cash Flow Anual</div>
+        <div class="section-desc">Caja libre real de los últimos años · combustible del DCF</div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-bars" id="fcfChart"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">📊 AUDITORÍA</div>
+        <div class="section-h">Los 7 Indicadores · Método Invictus</div>
+        <div class="section-desc">Validación automática contra rangos del sector</div>
+      </div>
+      <div class="ind-grid" id="indGrid"></div>
+    </div>
+
+    <!-- FRASES -->
+    <div class="quotes-row">
+      <div class="quote-card cyan-border">
+        <div class="quote-mark">"</div>
+        <div class="quote-text">Si puedes soñarlo, puedes lograrlo. La disciplina de seguir tu sistema es lo que transforma sueños en resultados. ¡Sin miedo al éxito!</div>
+        <div class="quote-author">— Jhon Román · Ultra Black</div>
+      </div>
+      <div class="quote-card">
+        <div class="quote-mark">"</div>
+        <div class="quote-text">El mercado de valores está diseñado para transferir dinero del impaciente al paciente. Sé temeroso cuando otros son codiciosos, y codicioso cuando otros tienen miedo.</div>
+        <div class="quote-author">— Warren Buffett</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    AVISO DE RIESGO Y DESCARGO DE RESPONSABILIDAD · Esta herramienta es de carácter educativo e informativo. No constituye asesoría
+    financiera, recomendación de inversión, ni invitación a comprar o vender valores. El valor intrínseco mostrado es una estimación basada
+    en supuestos y datos de terceros (Yahoo Finance, con delay de 15 minutos) que pueden contener errores o estar desactualizados. Toda
+    inversión en mercados financieros implica riesgo de pérdida de capital, incluyendo la pérdida total. Los rendimientos pasados no
+    garantizan resultados futuros. Cada persona es responsable de sus propias decisiones de inversión y debe consultar a un asesor
+    financiero profesional certificado antes de invertir. Ultra Black y Jhon Román no se responsabilizan por pérdidas derivadas del uso
+    de esta herramienta.
+  </div>
+
+  <footer>
+    <p>Construido para <strong>JHON ROMÁN</strong> · Programa <strong>ULTRA BLACK</strong></p>
+    <p>DATA EN VIVO · YAHOO FINANCE · COTIZACIONES DELAY 15 MIN</p>
+  </footer>
+</div>
+
+<script>
+  let API_URL = localStorage.getItem('ub_api_url') || '';
+  document.getElementById('apiUrl').value = API_URL;
+  if(API_URL) testApi();
+  function saveApi(){
+    API_URL = document.getElementById('apiUrl').value.replace(/\/$/,'').trim();
+    localStorage.setItem('ub_api_url', API_URL);
+    testApi();
+  }
+  async function testApi(){
+    const st = document.getElementById('apiStatus');
+    if(!API_URL){st.className='config-status err';st.textContent='⚠ Configurá tu URL de Render';return}
+    st.className='config-status';st.textContent='⏳ Conectando...';
+    try{
+      const r = await fetch(API_URL+'/health',{cache:'no-store'});
+      if(r.ok){st.className='config-status ok';st.textContent='✓ Backend conectado · OK'}
+      else throw new Error('status '+r.status);
+    }catch(e){st.className='config-status err';st.textContent='✗ No conecta: '+e.message}
+  }
+  function fmt(n,d=2){if(n===null||n===undefined||isNaN(n))return '--';return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})}
+  function pct(n,d=2){if(n===null||n===undefined||isNaN(n))return '--';return Number(n).toFixed(d)+'%'}
+  function fmtM(n){if(n===null||n===undefined||isNaN(n))return '--';return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:1})+'M'}
+  let DATA=null, WACC=10, DIV_YEARS=5, EPS_YEARS=5;
+  const G1=0.08, G2=0.04, GP=0.025;
+  function quickScan(t){document.getElementById('tickerInput').value=t;scanTicker()}
+  async function scanTicker(){
+    const t = document.getElementById('tickerInput').value.trim().toUpperCase();
+    if(!t){alert('Ingresá un ticker');return}
+    if(!API_URL){
+      document.getElementById('errorBox').className='error-box active';
+      document.getElementById('errorBox').textContent='Configurá primero la URL del backend (arriba)';
+      return;
+    }
+    document.getElementById('tickerInput').value=t;
+    document.getElementById('loading').className='loading active';
+    document.getElementById('errorBox').className='error-box';
+    document.getElementById('results').className='results';
+    document.getElementById('scanBtn').disabled=true;
+    try{
+      const r = await fetch(`${API_URL}/stock/${t}`,{cache:'no-store'});
+      if(!r.ok){
+        const err = await r.json().catch(()=>({detail:'Error desconocido'}));
+        throw new Error(err.detail||`HTTP ${r.status}`);
+      }
+      DATA = await r.json();
+      renderAll();
+      document.getElementById('results').className='results active';
+    }catch(e){
+      document.getElementById('errorBox').className='error-box active';
+      document.getElementById('errorBox').textContent='✗ Error: '+e.message;
+    }finally{
+      document.getElementById('loading').className='loading';
+      document.getElementById('scanBtn').disabled=false;
+    }
+  }
+  function renderAll(){
+    const d = DATA;
+    document.getElementById('stockTicker').textContent = d.ticker;
+    document.getElementById('stockName').textContent = `${d.name} · ${d.exchange||''}`;
+    const tags = document.getElementById('stockTags');
+    tags.innerHTML='';
+    [d.sector,d.country,d.cap_class].forEach(t=>{
+      if(t&&t!=='N/D'){const s=document.createElement('span');s.className='tag';s.textContent=t;tags.appendChild(s)}
+    });
+    document.getElementById('currentPrice').textContent = fmt(d.price);
+    document.getElementById('priceRange').innerHTML =
+      `52W High: ${fmt(d.high_52w)}<br>52W Low: ${fmt(d.low_52w)}<br>Market Cap: ${d.market_cap_fmt||'--'}`;
+    document.getElementById('kpiPE').textContent = d.pe?d.pe.toFixed(2):'--';
+    document.getElementById('kpiPESub').textContent = d.pe&&d.pe<15?'Bajo (atractivo)':d.pe&&d.pe<25?'Razonable':'Alto';
+    document.getElementById('kpiPESub').className = 'kpi-sub '+(d.pe&&d.pe<15?'ok':d.pe&&d.pe<25?'warn':'bad');
+    document.getElementById('kpiEPS').textContent = fmt(d.eps);
+    document.getElementById('kpiEPSSub').textContent = d.eps&&d.eps>0?'Rentable ✓':'Pérdida ✗';
+    document.getElementById('kpiEPSSub').className = 'kpi-sub '+(d.eps&&d.eps>0?'ok':'bad');
+    document.getElementById('kpiDiv').textContent = d.dividend_yield_pct?pct(d.dividend_yield_pct,2):'0%';
+    document.getElementById('kpiDivSub').textContent = d.dividend_rate?'$'+d.dividend_rate.toFixed(2)+' anual':'Sin dividendo';
+    document.getElementById('kpiCap').textContent = d.market_cap_fmt||'--';
+    document.getElementById('kpiCapSub').textContent = d.cap_class||'--';
+    document.getElementById('autoNote').textContent =
+      `Auto: FCF ${fmtM(d.fcf_base_m)} · ${d.shares_outstanding_m?d.shares_outstanding_m.toFixed(0):'?'}M acciones · caja neta ${fmtM(d.net_cash_m)}`;
+    calcDCF();renderMoat();renderDividends();renderEPS();renderFCF();renderIndicators();
+  }
+  function renderMoat(){
+    if(!DATA)return;
+    const lvl = DATA.moat_level || 'SIN MOAT CLARO';
+    const score = DATA.moat_score || 0;
+    const el = document.getElementById('moatLevel');
+    el.textContent = lvl;
+    el.className = 'moat-level ' + (
+      lvl.includes('AMPLIO') ? 'amplio' :
+      lvl.includes('MODERADO') ? 'moderado' :
+      lvl.includes('ESTRECHO') ? 'estrecho' : 'nulo'
+    );
+    document.getElementById('moatDesc').textContent = DATA.moat_desc || '--';
+    const pct = Math.min((score/9)*100,100);
+    document.getElementById('moatBar').style.width = pct+'%';
+    document.getElementById('moatScoreTxt').textContent = score+' / 9';
+    const sig = document.getElementById('moatSignals');
+    sig.innerHTML = '';
+    (DATA.moat_signals||[]).forEach(s=>{
+      const d = document.createElement('div');
+      d.className = 'moat-signal';
+      d.textContent = s;
+      sig.appendChild(d);
+    });
+    if(!(DATA.moat_signals||[]).length){
+      sig.innerHTML = '<div class="moat-signal" style="color:var(--muted)">No se detectaron señales financieras de ventaja competitiva</div>';
+    }
+  }
+  function calcDCF(){
+    if(!DATA)return;
+    const fcf = DATA.fcf_base_m||0;
+    const shares = DATA.shares_outstanding_m||1;
+    const cash = DATA.net_cash_m||0;
+    const market = DATA.price||0;
+    const wacc = WACC/100;
+    let pvSum=0,lastFcf=fcf;
+    for(let y=1;y<=10;y++){
+      const g = y<=5?G1:G2;
+      lastFcf = lastFcf*(1+g);
+      pvSum += lastFcf/Math.pow(1+wacc,y);
+    }
+    const tv = (lastFcf*(1+GP))/(wacc-GP);
+    const tvPv = tv/Math.pow(1+wacc,10);
+    const ev = pvSum+tvPv;
+    const equity = ev+cash;
+    const intrinsic = equity/shares;
+    const diff = intrinsic-market;
+    const mos = market>0?((intrinsic-market)/intrinsic)*100:0;
+    document.getElementById('intrinsicVal').textContent = fmt(intrinsic);
+    document.getElementById('resMarket').textContent = fmt(market);
+    document.getElementById('resDiff').textContent = (diff>=0?'+':'')+fmt(diff);
+    document.getElementById('resDiff').style.color = diff>=0?'var(--green)':'var(--red)';
+    document.getElementById('resMos').textContent = mos.toFixed(1)+'%';
+    document.getElementById('resMos').style.color = mos>=20?'var(--green)':mos>=0?'var(--yellow)':'var(--red)';
+    document.getElementById('mosVal').textContent = mos.toFixed(1)+'%';
+    document.getElementById('mosVal').style.color = mos>=20?'var(--green)':mos>=0?'var(--yellow)':'var(--red)';
+    const dEl = document.getElementById('decisionBig');
+    const dReason = document.getElementById('decisionReason');
+    dEl.classList.remove('buy','wait','avoid');
+    if(intrinsic<=0||!isFinite(intrinsic)){
+      dEl.textContent='NO COMPRES';dEl.classList.add('avoid');
+      dReason.textContent='FCF negativo o datos insuficientes. No apta para DCF Buffett.';
+    }else if(mos>=20){
+      dEl.textContent='COMPRA';dEl.classList.add('buy');
+      dReason.textContent=`Margen ≥ 20%. Cumple regla Invictus. Descontada ${mos.toFixed(0)}% bajo su valor real.`;
+    }else if(mos>=0){
+      dEl.textContent='ESPERA';dEl.classList.add('wait');
+      dReason.textContent=`Margen positivo (${mos.toFixed(1)}%) pero menor a 20%. Esperá mejor precio.`;
+    }else{
+      dEl.textContent='NO COMPRES';dEl.classList.add('avoid');
+      dReason.textContent=`Sobrevalorada ${Math.abs(mos).toFixed(1)}% sobre su valor intrínseco.`;
+    }
+  }
+  function setWacc(v){
+    WACC=v;
+    document.getElementById('waccSlider').value=v;
+    document.getElementById('waccDisplay').textContent=v.toFixed(1)+'%';
+    calcDCF();
+  }
+  document.getElementById('waccSlider').addEventListener('input',e=>{
+    WACC=parseFloat(e.target.value);
+    document.getElementById('waccDisplay').textContent=WACC.toFixed(1)+'%';
+    calcDCF();
+  });
+  function setDivYears(y){
+    DIV_YEARS=y;
+    document.getElementById('divTab5').classList.toggle('active',y===5);
+    document.getElementById('divTab10').classList.toggle('active',y===10);
+    renderDividends();
+  }
+  function renderDividends(){
+    if(!DATA)return;
+    const divNow = DATA.dividend_rate||0;
+    const sec = document.getElementById('divSection');
+    if(divNow<=0){sec.style.display='none';return}
+    sec.style.display='block';
+    let g = DATA.eps_growth_pct ? DATA.eps_growth_pct/100 : 0.05;
+    if(g<0.02) g=0.02;
+    if(g>0.12) g=0.12;
+    const years = DIV_YEARS;
+    let vals=[],total=0,v=divNow;
+    for(let i=1;i<=years;i++){v=v*(1+g);vals.push(v);total+=v}
+    const max = Math.max(...vals,divNow);
+    const chart = document.getElementById('divChart');
+    chart.innerHTML='';
+    chart.appendChild(makeBar(divNow,max,'HOY',true));
+    vals.forEach((val,i)=>chart.appendChild(makeBar(val,max,'A'+(i+1),false)));
+    document.getElementById('divNow').textContent = '$'+divNow.toFixed(2);
+    document.getElementById('divEnd').textContent = '$'+vals[vals.length-1].toFixed(2);
+    document.getElementById('divEndYr').textContent = 'año '+years+' · +'+(g*100).toFixed(1)+'%/año';
+    document.getElementById('divTotal').textContent = '$'+total.toFixed(2);
+  }
+  function setEpsYears(y){
+    EPS_YEARS=y;
+    document.getElementById('epsTab5').classList.toggle('active',y===5);
+    document.getElementById('epsTab10').classList.toggle('active',y===10);
+    renderEPS();
+  }
+  function renderEPS(){
+    if(!DATA)return;
+    const epsNow = DATA.eps||0;
+    const sec = document.getElementById('epsSection');
+    if(epsNow<=0){sec.style.display='none';return}
+    sec.style.display='block';
+    let g = DATA.eps_growth_pct ? DATA.eps_growth_pct/100 : 0.06;
+    if(g<0.02) g=0.02;
+    if(g>0.20) g=0.20;
+    const years = EPS_YEARS;
+    let vals=[],v=epsNow;
+    for(let i=1;i<=years;i++){v=v*(1+g);vals.push(v)}
+    const max = Math.max(...vals,epsNow);
+    const chart = document.getElementById('epsChart');
+    chart.innerHTML='';
+    chart.appendChild(makeBar(epsNow,max,'HOY',true));
+    vals.forEach((val,i)=>chart.appendChild(makeBar(val,max,'A'+(i+1),false)));
+    const growthTotal = ((vals[vals.length-1]-epsNow)/epsNow)*100;
+    document.getElementById('epsNow').textContent = '$'+epsNow.toFixed(2);
+    document.getElementById('epsEnd').textContent = '$'+vals[vals.length-1].toFixed(2);
+    document.getElementById('epsEndYr').textContent = 'año '+years+' · +'+(g*100).toFixed(1)+'%/año';
+    document.getElementById('epsGrowthTotal').textContent = '+'+growthTotal.toFixed(0)+'%';
+  }
+  function renderFCF(){
+    if(!DATA)return;
+    const sec = document.getElementById('fcfSection');
+    const hist = DATA.fcf_history||[];
+    if(!hist.length){sec.style.display='none';return}
+    sec.style.display='block';
+    const vals = hist.map(h=>h.fcf_m).reverse();
+    const yrs = hist.map(h=>h.year).reverse();
+    const max = Math.max(...vals.map(Math.abs));
+    const chart = document.getElementById('fcfChart');
+    chart.innerHTML='';
+    vals.forEach((val,i)=>chart.appendChild(makeBar(val,max,yrs[i],false,true)));
+  }
+  function makeBar(val,max,label,isToday,isMoney){
+    const col = document.createElement('div');
+    col.className='bar-col';
+    const h = max>0 ? Math.max((Math.abs(val)/max)*130,4) : 4;
+    const valText = isMoney ? fmtM(val) : '$'+val.toFixed(2);
+    col.innerHTML =
+      `<div class="bar-val">${valText}</div>
+       <div class="bar ${isToday?'dim':''}" style="height:${h}px"></div>
+       <div class="bar-yr">${label}</div>`;
+    return col;
+  }
+  function renderIndicators(){
+    const d = DATA;
+    const sector = (d.sector||'').toLowerCase();
+    let ranges = {roe:[12,25],roic:[10,20],pm:[10,25],de:[0,1],eps5:[5,15]};
+    if(sector.includes('tech')) ranges={roe:[15,30],roic:[15,25],pm:[15,40],de:[0,0.5],eps5:[10,25]};
+    else if(sector.includes('financial')) ranges={roe:[10,20],roic:[6,12],pm:[20,35],de:[0,3],eps5:[5,12]};
+    else if(sector.includes('energy')||sector.includes('basic mat')||sector.includes('estate')) ranges={roe:[8,18],roic:[5,12],pm:[5,30],de:[0,2],eps5:[3,12]};
+    const inds = [
+      {name:'ROE',val:d.roe_pct,fmt:pct,range:ranges.roe},
+      {name:'ROIC',val:d.roic_pct,fmt:pct,range:ranges.roic},
+      {name:'Profit Margin',val:d.profit_margin_pct,fmt:pct,range:ranges.pm},
+      {name:'Debt/Equity',val:d.debt_equity,fmt:v=>v?v.toFixed(2):'--',range:ranges.de,lowerBetter:true},
+      {name:'Payout',val:d.payout_pct,fmt:pct,range:[0,75]},
+      {name:'EPS Growth',val:d.eps_growth_pct,fmt:pct,range:ranges.eps5},
+      {name:'P/E',val:d.pe,fmt:v=>v?v.toFixed(2):'--',range:[0,25],lowerBetter:true},
+    ];
+    let score=0;
+    const grid = document.getElementById('indGrid');
+    grid.innerHTML='';
+    inds.forEach(ind=>{
+      let badge='check-warn',label='N/D';
+      if(ind.val!==null&&ind.val!==undefined&&!isNaN(ind.val)){
+        const v=ind.val;
+        if(ind.lowerBetter){
+          if(v<=ind.range[1]){badge='check-ok';label='OK';score++}
+          else{badge='check-bad';label='ALTO'}
+        }else{
+          if(v>=ind.range[0]){badge='check-ok';label='SUPERA';score++}
+          else if(v>=ind.range[0]*0.6){badge='check-warn';label='BAJO'}
+          else{badge='check-bad';label='MALO'}
+        }
+      }
+      grid.innerHTML += `<div class="ind-box">
+        <div class="ind-name">${ind.name}</div>
+        <div class="ind-val">${ind.fmt(ind.val)}</div>
+        <span class="ind-check ${badge}">${label}</span>
+      </div>`;
+    });
+    grid.innerHTML += `<div class="ind-box">
+      <div class="ind-name">SCORE TOTAL</div>
+      <div class="ind-val" style="color:var(--cyan)">${score}/7</div>
+      <span class="ind-check ${score>=5?'check-ok':score>=3?'check-warn':'check-bad'}">${score>=5?'CALIDAD ALTA':score>=3?'MEDIA':'BAJA'}</span>
+    </div>`;
+  }
+  document.getElementById('tickerInput').addEventListener('keydown',e=>{if(e.key==='Enter')scanTicker()});
+  function updateTS(){document.getElementById('ts').textContent='LAST '+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}
+  updateTS();setInterval(updateTS,60000);
+</script>
+</body>
+</html>

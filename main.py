@@ -2,6 +2,7 @@
 UB Scanner Invictus — Backend
 Construido para Jhon Román · Programa Ultra Black
 Fuente de datos: Financial Modeling Prep (API stable)
+Endpoint principal: GET /stock/{ticker}
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -120,6 +121,68 @@ def fmt_money(n):
     return f"${n:.2f}"
 
 
+def calc_moat(roe_pct, roic_pct, pm_pct, de_ratio, market_cap):
+    """
+    Estima la ventaja competitiva (MOAT) con señales financieras objetivas.
+    ROE alto + márgenes fuertes + ROIC sólido + deuda controlada + tamaño =
+    señales de empresa con foso ancho estilo Buffett.
+    """
+    score = 0
+    signals = []
+
+    if roe_pct is not None:
+        if roe_pct >= 20:
+            score += 2
+            signals.append("Rentabilidad sobre patrimonio excepcional (ROE alto)")
+        elif roe_pct >= 12:
+            score += 1
+            signals.append("Buena rentabilidad sobre patrimonio")
+
+    if pm_pct is not None:
+        if pm_pct >= 20:
+            score += 2
+            signals.append("Márgenes de ganancia muy altos: poder de fijación de precios")
+        elif pm_pct >= 10:
+            score += 1
+            signals.append("Márgenes de ganancia saludables")
+
+    if roic_pct is not None:
+        if roic_pct >= 12:
+            score += 2
+            signals.append("Retorno sobre capital invertido sobresaliente")
+        elif roic_pct >= 7:
+            score += 1
+            signals.append("Retorno sobre capital invertido sólido")
+
+    if de_ratio is not None:
+        if de_ratio <= 0.5:
+            score += 1
+            signals.append("Deuda muy baja: solidez financiera")
+
+    if market_cap and market_cap >= 10e9:
+        score += 1
+        signals.append("Empresa grande y consolidada en su mercado")
+
+    if score >= 7:
+        level = "MOAT AMPLIO"
+        desc = ("Ventaja competitiva fuerte y durable. Es el tipo de negocio que Buffett "
+                "llama 'castillo con foso ancho': difícil de atacar por la competencia.")
+    elif score >= 4:
+        level = "MOAT MODERADO"
+        desc = ("Tiene ventajas competitivas reales, pero no impenetrables. Buen negocio "
+                "que requiere seguir vigilando su posición.")
+    elif score >= 2:
+        level = "MOAT ESTRECHO"
+        desc = ("Ventaja competitiva limitada. El negocio compite duro y sus retornos "
+                "pueden erosionarse con el tiempo.")
+    else:
+        level = "SIN MOAT CLARO"
+        desc = ("No se detectan señales financieras de ventaja competitiva durable. "
+                "Mayor riesgo para inversión de largo plazo.")
+
+    return level, desc, score, signals
+
+
 @app.get("/")
 def root():
     return {"service": "UB Scanner Invictus", "status": "online",
@@ -232,6 +295,10 @@ def get_stock(ticker: str):
     else:
         cap_class = "MICRO-CAP"
 
+    moat_level, moat_desc, moat_score, moat_signals = calc_moat(
+        roe_pct, roic_pct, pm_pct, de, market_cap
+    )
+
     summary = profile.get("description") or ""
 
     result = {
@@ -244,11 +311,18 @@ def get_stock(ticker: str):
         "exchange": profile.get("exchangeFullName") or profile.get("exchange") or quote.get("exchange") or "N/D",
         "cap_class": cap_class,
         "website": profile.get("website"),
+
+        "moat_level": moat_level,
+        "moat_desc": moat_desc,
+        "moat_score": moat_score,
+        "moat_signals": moat_signals,
+
         "price": price,
         "high_52w": high52,
         "low_52w": low52,
         "market_cap": market_cap,
         "market_cap_fmt": fmt_money(market_cap),
+
         "roe_pct": roe_pct,
         "roic_pct": roic_pct,
         "profit_margin_pct": pm_pct,
@@ -257,12 +331,14 @@ def get_stock(ticker: str):
         "eps_growth_pct": None,
         "pe": pe,
         "eps": eps,
+
         "fcf_base_m": fcf_base_m,
         "fcf_history": fcf_data[:5],
         "shares_outstanding_m": shares_m,
         "net_cash_m": net_cash_m,
         "total_cash": total_cash,
         "total_debt": total_debt,
+
         "dividend_yield_pct": div_yield_pct,
         "dividend_rate": div_rate,
         "beta": beta,
@@ -271,6 +347,7 @@ def get_stock(ticker: str):
         "target_mean": None,
         "analyst_count": 0,
         "business_summary": summary[:500],
+
         "coverage_full": coverage_full,
         "data_source": "FMP" if coverage_full else "FMP-partial (ticker fuera de plan free)",
     }
@@ -287,7 +364,7 @@ def get_news(ticker: str, limit: int = 5):
     if cached is not None:
         return cached
     try:
-        items = _fmp_list("news/stock", symbols=ticker, limit=limit)
+        items = _fmp_list("news/stock", _soft=True, symbols=ticker, limit=limit)
         result_list = []
         for n in items[:limit]:
             result_list.append({
