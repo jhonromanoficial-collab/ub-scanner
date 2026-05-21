@@ -12,9 +12,32 @@ import math
 from datetime import datetime
 import os
 
+try:
+    from deep_translator import GoogleTranslator
+    _TRANSLATOR_OK = True
+except Exception:
+    _TRANSLATOR_OK = False
+
 FMP_API_KEY = os.environ.get("FMP_API_KEY", "").strip()
 FMP_BASE = "https://financialmodelingprep.com/stable"
 HTTP_TIMEOUT = 15
+_translation_cache: dict[str, str] = {}
+
+
+def traducir_es(texto: str) -> str:
+    if not texto or not _TRANSLATOR_OK:
+        return texto or ""
+    if texto in _translation_cache:
+        return _translation_cache[texto]
+    try:
+        fragmento = texto[:4500]
+        out = GoogleTranslator(source="auto", target="es").translate(fragmento)
+        if out:
+            _translation_cache[texto] = out
+            return out
+    except Exception:
+        pass
+    return texto
 
 app = FastAPI(title="UB Scanner Invictus API")
 
@@ -300,6 +323,7 @@ def get_stock(ticker: str):
     )
 
     summary = profile.get("description") or ""
+    summary_es = traducir_es(summary[:900])
 
     result = {
         "ticker": ticker,
@@ -346,7 +370,8 @@ def get_stock(ticker: str):
         "recommendation": "none",
         "target_mean": None,
         "analyst_count": 0,
-        "business_summary": summary[:500],
+        "business_summary": summary_es,
+        "business_summary_en": summary[:900],
 
         "coverage_full": coverage_full,
         "data_source": "FMP" if coverage_full else "FMP-partial (ticker fuera de plan free)",

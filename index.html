@@ -167,6 +167,15 @@
   .quote-author{color:var(--cyan);font-size:12px;font-weight:700;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase}
   .quotes-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
 
+  /* NEGOCIO */
+  .biz-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px;margin-bottom:20px;position:relative;overflow:hidden}
+  .biz-card::before{content:'🔍';position:absolute;right:22px;top:18px;font-size:42px;opacity:.12}
+  .biz-label{color:var(--cyan);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px}
+  .biz-name{font-size:20px;font-weight:700;letter-spacing:-.4px;margin-bottom:10px}
+  .biz-text{color:var(--soft);font-size:13.5px;line-height:1.7;max-width:94%}
+  .biz-meta{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .biz-meta .tag{background:var(--card2)}
+
   /* DISCLAIMER */
   .disclaimer{color:var(--muted);font-size:10px;line-height:1.6;text-align:center;max-width:760px;margin:0 auto;padding:16px;border-top:1px solid var(--line);font-family:var(--sans)}
   @media (max-width:880px){
@@ -277,6 +286,14 @@
         </div>
       </div>
       <div class="moat-signals" id="moatSignals"></div>
+    </div>
+
+    <!-- DE QUÉ TRATA LA EMPRESA -->
+    <div class="biz-card" id="bizCard">
+      <div class="biz-label">🔍 DE QUÉ TRATA LA EMPRESA</div>
+      <div class="biz-name" id="bizName">--</div>
+      <div class="biz-text" id="bizText">--</div>
+      <div class="biz-meta" id="bizMeta"></div>
     </div>
 
     <div class="section">
@@ -494,7 +511,26 @@
     document.getElementById('kpiCapSub').textContent = d.cap_class||'--';
     document.getElementById('autoNote').textContent =
       `Auto: FCF ${fmtM(d.fcf_base_m)} · ${d.shares_outstanding_m?d.shares_outstanding_m.toFixed(0):'?'}M acciones · caja neta ${fmtM(d.net_cash_m)}`;
-    calcDCF();renderMoat();renderDividends();renderEPS();renderFCF();renderIndicators();
+    calcDCF();renderMoat();renderBiz();renderDividends();renderEPS();renderFCF();renderIndicators();
+  }
+  function renderBiz(){
+    if(!DATA)return;
+    const card = document.getElementById('bizCard');
+    const txt = (DATA.business_summary||'').trim();
+    if(!txt){card.style.display='none';return}
+    card.style.display='block';
+    document.getElementById('bizName').textContent = DATA.name || DATA.ticker;
+    document.getElementById('bizText').textContent = txt;
+    const meta = document.getElementById('bizMeta');
+    meta.innerHTML='';
+    [DATA.industry, DATA.sector, DATA.country].forEach(t=>{
+      if(t&&t!=='N/D'){
+        const s=document.createElement('span');
+        s.className='tag';
+        s.textContent=t;
+        meta.appendChild(s);
+      }
+    });
   }
   function renderMoat(){
     if(!DATA)return;
