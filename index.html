@@ -433,7 +433,7 @@
 </div>
 
 <script>
-  let API_URL = localStorage.getItem('ub_api_url') || '';
+  let API_URL = localStorage.getItem('ub_api_url') || 'https://ub-scanner.onrender.com';
   document.getElementById('apiUrl').value = API_URL;
   if(API_URL) testApi();
   function saveApi(){
