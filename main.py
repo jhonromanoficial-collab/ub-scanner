@@ -434,7 +434,7 @@ def get_stock(
         reinv_rate = 0.70
     sgr_inicial = roic_5y * reinv_rate
     decay_rate = sector_data["decay"]
-    wacc_sugerido = 0.17
+    wacc_sugerido = 0.12  # Punto medio recomendado (10%-17% rango Invictus)
     tasa_perpetua = 0.03
 
     # ===== MOAT =====
