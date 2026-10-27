@@ -245,18 +245,18 @@
   <div class="search-box">
     <div class="search-label">→ INGRESÁ TICKER</div>
     <div class="search-row">
-      <input type="text" class="ticker-input" id="tickerInput" placeholder="CGAU" maxlength="6">
+      <input type="text" class="ticker-input" id="tickerInput" placeholder="AAPL" maxlength="6">
       <button class="scan-btn" id="scanBtn" onclick="scanTicker()">⚡ ESCANEAR</button>
     </div>
     <div class="quick-tickers">
-      <button onclick="quickScan('CGAU')">CGAU</button>
       <button onclick="quickScan('AAPL')">AAPL</button>
       <button onclick="quickScan('MSFT')">MSFT</button>
       <button onclick="quickScan('GOOGL')">GOOGL</button>
       <button onclick="quickScan('NVDA')">NVDA</button>
+      <button onclick="quickScan('META')">META</button>
       <button onclick="quickScan('KO')">KO</button>
       <button onclick="quickScan('JNJ')">JNJ</button>
-      <button onclick="quickScan('PG')">PG</button>
+      <button onclick="quickScan('HRB')">HRB</button>
     </div>
   </div>
 
@@ -894,6 +894,14 @@
   document.getElementById('tickerInput').addEventListener('keydown',e=>{if(e.key==='Enter')scanTicker()});
   function updateTS(){document.getElementById('ts').textContent='LAST '+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}
   updateTS();setInterval(updateTS,60000);
+
+  // Al abrir: si el backend ya está configurado, cargar AAPL por defecto
+  setTimeout(()=>{
+    if(API_URL && !DATA){
+      document.getElementById('tickerInput').value='AAPL';
+      scanTicker();
+    }
+  },1000);
 </script>
 </body>
 </html>
