@@ -36,7 +36,8 @@ except Exception:
 
 
 FMP_API_KEY = os.environ.get("FMP_API_KEY", "")  # Opcional: si está, usa FMP
-FMP_BASE = "https://financialmodelingprep.com/api/v3"
+# API Stable (nueva) de FMP — reemplaza los endpoints legacy que FMP cerró en Aug 2025
+FMP_BASE = "https://financialmodelingprep.com/stable"
 
 
 app = FastAPI(title="UB Scanner Invictus API v3")
@@ -121,8 +122,11 @@ def fmp_fetch(ticker: str) -> dict:
     out = {"source": "FMP"}
     try:
         with httpx.Client(timeout=10.0) as client:
+            # NOTA: FMP cerró los endpoints legacy /api/v3/ en Aug 2025.
+            # Ahora usamos /stable/ con ?symbol=TICKER en vez de /api/v3/.../TICKER
+
             # Profile (nombre, sector, industria, precio)
-            r = client.get(f"{FMP_BASE}/profile/{ticker}", params={"apikey": FMP_API_KEY})
+            r = client.get(f"{FMP_BASE}/profile", params={"symbol": ticker, "apikey": FMP_API_KEY})
             if r.status_code == 200:
                 data = r.json()
                 if data and isinstance(data, list) and len(data) > 0:
@@ -131,44 +135,48 @@ def fmp_fetch(ticker: str) -> dict:
                     out["sector_raw"] = p.get("sector")
                     out["industry"] = p.get("industry")
                     out["country"] = p.get("country")
-                    out["exchange"] = p.get("exchangeShortName")
+                    out["exchange"] = p.get("exchangeShortName") or p.get("exchange")
                     out["price"] = p.get("price")
-                    out["market_cap"] = p.get("mktCap")
+                    out["market_cap"] = p.get("mktCap") or p.get("marketCap")
                     out["website"] = p.get("website")
                     out["business_summary_en"] = p.get("description")
                     out["beta"] = p.get("beta")
-                    out["high_52w"] = p.get("range", "").split("-")[-1].strip() if p.get("range") else None
-                    out["low_52w"] = p.get("range", "").split("-")[0].strip() if p.get("range") else None
-                    try: out["high_52w"] = float(out["high_52w"]) if out["high_52w"] else None
-                    except: out["high_52w"] = None
-                    try: out["low_52w"] = float(out["low_52w"]) if out["low_52w"] else None
-                    except: out["low_52w"] = None
+                    # 52W high/low pueden venir en campos separados o en range
+                    out["high_52w"] = p.get("priceHigh52") or p.get("yearHigh")
+                    out["low_52w"] = p.get("priceLow52") or p.get("yearLow")
+                    if not out.get("high_52w") and p.get("range"):
+                        try:
+                            parts = p.get("range", "").split("-")
+                            out["low_52w"] = float(parts[0].strip())
+                            out["high_52w"] = float(parts[-1].strip())
+                        except: pass
             # Key Metrics TTM (ROIC, ROE, payout, debt/eq)
-            r = client.get(f"{FMP_BASE}/key-metrics-ttm/{ticker}", params={"apikey": FMP_API_KEY})
+            r = client.get(f"{FMP_BASE}/key-metrics-ttm", params={"symbol": ticker, "apikey": FMP_API_KEY})
             if r.status_code == 200:
                 data = r.json()
                 if data and isinstance(data, list) and len(data) > 0:
                     km = data[0]
-                    out["roic"] = km.get("roicTTM")
-                    out["roe"] = km.get("roeTTM")
+                    out["roic"] = km.get("roicTTM") or km.get("returnOnInvestedCapitalTTM")
+                    out["roe"] = km.get("roeTTM") or km.get("returnOnEquityTTM")
                     out["payout_ratio"] = km.get("payoutRatioTTM")
-                    out["debt_equity"] = km.get("debtToEquityTTM")
-                    out["pe"] = km.get("peRatioTTM")
-                    out["eps"] = km.get("netIncomePerShareTTM")
+                    out["debt_equity"] = km.get("debtToEquityTTM") or km.get("debtEquityRatioTTM")
+                    out["pe"] = km.get("peRatioTTM") or km.get("priceToEarningsRatioTTM")
+                    out["eps"] = km.get("netIncomePerShareTTM") or km.get("epsTTM")
                     out["fcf_per_share"] = km.get("freeCashFlowPerShareTTM")
                     out["dividend_yield"] = km.get("dividendYieldTTM")
-                    out["shares_outstanding"] = km.get("marketCap", 0) / km.get("peRatioTTM", 0) if (km.get("peRatioTTM") and km.get("peRatioTTM") > 0) else None
             # Ratios TTM (profit margin, EPS growth)
-            r = client.get(f"{FMP_BASE}/ratios-ttm/{ticker}", params={"apikey": FMP_API_KEY})
+            r = client.get(f"{FMP_BASE}/ratios-ttm", params={"symbol": ticker, "apikey": FMP_API_KEY})
             if r.status_code == 200:
                 data = r.json()
                 if data and isinstance(data, list) and len(data) > 0:
                     rt = data[0]
-                    out["profit_margin"] = rt.get("netProfitMarginTTM")
+                    out["profit_margin"] = rt.get("netProfitMarginTTM") or rt.get("netIncomeMarginTTM")
                     if "payout_ratio" not in out or out["payout_ratio"] is None:
                         out["payout_ratio"] = rt.get("payoutRatioTTM")
+                    if "dividend_yield" not in out or out["dividend_yield"] is None:
+                        out["dividend_yield"] = rt.get("dividendYieldTTM")
             # Cash Flow histórico (FCF últimos años)
-            r = client.get(f"{FMP_BASE}/cash-flow-statement/{ticker}", params={"apikey": FMP_API_KEY, "limit": 5})
+            r = client.get(f"{FMP_BASE}/cash-flow-statement", params={"symbol": ticker, "apikey": FMP_API_KEY, "limit": 5})
             if r.status_code == 200:
                 data = r.json()
                 if data and isinstance(data, list):
@@ -181,25 +189,42 @@ def fmp_fetch(ticker: str) -> dict:
                     if fcf_hist:
                         out["fcf_history"] = fcf_hist
                         out["fcf_base_m"] = fcf_hist[0]["fcf_m"]
-            # Income Statement (para shares outstanding)
-            r = client.get(f"{FMP_BASE}/income-statement/{ticker}", params={"apikey": FMP_API_KEY, "limit": 1})
+            # Income Statement (shares outstanding + eps_growth)
+            r = client.get(f"{FMP_BASE}/income-statement", params={"symbol": ticker, "apikey": FMP_API_KEY, "limit": 2})
             if r.status_code == 200:
                 data = r.json()
                 if data and isinstance(data, list) and len(data) > 0:
-                    shares = data[0].get("weightedAverageShsOutDil") or data[0].get("weightedAverageShsOut")
+                    row = data[0]
+                    shares = row.get("weightedAverageShsOutDil") or row.get("weightedAverageShsOut")
                     if shares:
                         out["shares_outstanding"] = shares
-            # Analyst estimates (EPS growth)
-            r = client.get(f"{FMP_BASE}/analyst-estimates/{ticker}", params={"apikey": FMP_API_KEY, "limit": 1})
+                    # Calcular eps growth comparando con año anterior
+                    eps_now = row.get("eps") or row.get("epsdiluted")
+                    if len(data) >= 2 and eps_now:
+                        eps_prev = data[1].get("eps") or data[1].get("epsdiluted")
+                        if eps_prev and eps_prev > 0:
+                            out["eps_growth"] = (eps_now - eps_prev) / eps_prev
+            # Dividendos (para dividend_rate)
+            r = client.get(f"{FMP_BASE}/dividends", params={"symbol": ticker, "apikey": FMP_API_KEY, "limit": 4})
+            if r.status_code == 200:
+                data = r.json()
+                if data and isinstance(data, list) and len(data) >= 1:
+                    # Sumar últimos 4 dividendos trimestrales ≈ dividendo anual
+                    total = sum((row.get("dividend") or 0) for row in data[:4])
+                    if total > 0:
+                        out["dividend_rate"] = total
+            # Analyst estimates (EPS growth futuro, opcional)
+            r = client.get(f"{FMP_BASE}/analyst-estimates", params={"symbol": ticker, "apikey": FMP_API_KEY, "limit": 1})
             if r.status_code == 200:
                 data = r.json()
                 if data and isinstance(data, list) and len(data) > 0:
-                    est = data[0].get("estimatedEpsAvg")
+                    est = data[0].get("estimatedEpsAvg") or data[0].get("epsAvg")
                     cur_eps = out.get("eps")
-                    if est and cur_eps and cur_eps > 0:
+                    if est and cur_eps and cur_eps > 0 and not out.get("eps_growth"):
                         out["eps_growth"] = (est - cur_eps) / cur_eps
     except Exception as e:
-        out["fmp_error"] = str(e)[:100]
+        out["fmp_error"] = str(e)[:200]
+        print(f"[FMP ERROR {ticker}] {e}")
     return out
 
 
