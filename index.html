@@ -331,24 +331,24 @@
         <div class="wacc-panel">
           <div class="wacc-explain">
             <div class="we-title">Método Invictus · Lo que ves</div>
-            <div class="we-text">El motor replica <strong>exactamente tu Excel INVICTUS DCF</strong>: crecimiento inicial = ROIC × Reinversión, luego decae año a año según el sector (Damodaran). <strong>Movés el WACC</strong> para ser más o menos exigente — Jhon usa 17% por defecto.</div>
+            <div class="we-text">El motor replica <strong>exactamente tu Excel INVICTUS DCF</strong>: crecimiento inicial = ROIC × Reinversión, luego decae año a año según el sector (Damodaran). <strong>Movés el WACC</strong> para ser más o menos exigente — 12% es el punto medio, 17% es Invictus hardcore.</div>
           </div>
           <div class="wacc-value-display">
-            <div class="wvd-num" id="waccDisplay">17.0%</div>
+            <div class="wvd-num" id="waccDisplay">12.0%</div>
             <div class="wvd-label">Tasa de descuento (WACC)</div>
           </div>
           <div class="slider-wrap">
-            <input type="range" id="waccSlider" min="8" max="25" step="0.5" value="17">
+            <input type="range" id="waccSlider" min="8" max="25" step="0.5" value="12">
             <div class="slider-marks">
-              <span>8% · suave</span>
-              <span>17% · Invictus</span>
+              <span>8% · agresivo</span>
+              <span>12% · recomendado</span>
               <span>25% · ultra estricto</span>
             </div>
           </div>
           <div class="wacc-presets">
             <button onclick="setWacc(10)">Buffett 10%</button>
+            <button onclick="setWacc(12)">Recomendado 12%</button>
             <button onclick="setWacc(17)">Invictus 17%</button>
-            <button onclick="setWacc(20)">Estricto 20%</button>
           </div>
           <div class="invictus-params" id="invictusParams"></div>
           <div class="manual-override">
@@ -496,7 +496,7 @@
   function fmt(n,d=2){if(n===null||n===undefined||isNaN(n))return '--';return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})}
   function pct(n,d=2){if(n===null||n===undefined||isNaN(n))return '--';return Number(n).toFixed(d)+'%'}
   function fmtM(n){if(n===null||n===undefined||isNaN(n))return '--';return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:1})+'M'}
-  let DATA=null, WACC=17, DIV_YEARS=5, EPS_YEARS=5;
+  let DATA=null, WACC=12, DIV_YEARS=5, EPS_YEARS=5;
   // Método Invictus: tasa perpetua Gordon fija = 3%
   const GP=0.03;
   function quickScan(t){document.getElementById('tickerInput').value=t;scanTicker()}
