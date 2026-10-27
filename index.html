@@ -237,7 +237,7 @@
 
   <div class="config-bar">
     <label>API URL:</label>
-    <input type="text" id="apiUrl" placeholder="https://tu-backend.onrender.com" value="">
+    <input type="text" id="apiUrl" placeholder="https://ub-scanner.onrender.com" value="https://ub-scanner.onrender.com">
     <button onclick="saveApi()">GUARDAR</button>
     <span class="config-status" id="apiStatus">⚠ Configurá tu URL de Render</span>
   </div>
@@ -475,9 +475,16 @@
 </div>
 
 <script>
-  let API_URL = localStorage.getItem('ub_api_url') || '';
+  // URL por defecto del backend Ultra Black — cualquier usuario entra ya configurado
+  const UB_DEFAULT_API = 'https://ub-scanner.onrender.com';
+  let API_URL = localStorage.getItem('ub_api_url') || UB_DEFAULT_API;
   document.getElementById('apiUrl').value = API_URL;
-  if(API_URL) testApi();
+  // Guardar el default en localStorage si es la primera vez
+  if(!localStorage.getItem('ub_api_url')) {
+    localStorage.setItem('ub_api_url', UB_DEFAULT_API);
+  }
+  // Test inmediato al abrir
+  testApi();
   function saveApi(){
     API_URL = document.getElementById('apiUrl').value.replace(/\/$/,'').trim();
     localStorage.setItem('ub_api_url', API_URL);
