@@ -12,7 +12,7 @@
     --bg:#000; --card:#0a0a0a; --card2:#111; --line:#1c1c1c;
     --cyan:#00e5ff; --cyan2:#00b8d4; --cyan-dim:rgba(0,229,255,.1);
     --white:#fff; --muted:#666; --soft:#9a9a9a;
-    --green:#00ff88; --red:#ff3366; --yellow:#ffcc00;
+    --green:#00ff88; --red:#ff3366; --yellow:#ffcc00; --gold:#eab308;
     --mono:'JetBrains Mono',monospace;
     --sans:'Space Grotesk',-apple-system,sans-serif;
   }
@@ -76,6 +76,8 @@
   .decision-big.buy{background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,255,136,.05));color:var(--green);border:2px solid var(--green);text-shadow:0 0 30px rgba(0,255,136,.5)}
   .decision-big.wait{background:linear-gradient(135deg,rgba(255,204,0,.15),rgba(255,204,0,.05));color:var(--yellow);border:2px solid var(--yellow);text-shadow:0 0 30px rgba(255,204,0,.4)}
   .decision-big.avoid{background:linear-gradient(135deg,rgba(255,51,102,.15),rgba(255,51,102,.05));color:var(--red);border:2px solid var(--red);text-shadow:0 0 30px rgba(255,51,102,.4)}
+  .decision-big.gold{background:linear-gradient(135deg,rgba(234,179,8,.18),rgba(234,179,8,.05));color:var(--gold);border:2px solid var(--gold);text-shadow:0 0 32px rgba(234,179,8,.5);animation:goldPulse 2.5s ease-in-out infinite}
+  @keyframes goldPulse{0%,100%{box-shadow:0 0 20px rgba(234,179,8,.25)}50%{box-shadow:0 0 36px rgba(234,179,8,.55)}}
   .decision-reason{color:var(--soft);font-size:13px;margin-top:16px;line-height:1.5}
   .mos-badge{margin-top:14px;padding:10px 18px;background:var(--bg);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--soft);font-family:var(--mono)}
   .mos-badge .mos-val{color:var(--cyan);font-weight:800;font-size:18px;margin-left:6px;font-family:var(--mono)}
@@ -106,6 +108,29 @@
   .wacc-presets{display:flex;gap:8px;margin-top:18px}
   .wacc-presets button{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--soft);padding:8px;border-radius:8px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s}
   .wacc-presets button:hover{border-color:var(--cyan);color:var(--cyan)}
+  .invictus-params{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ip-item{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .ip-lbl{color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px}
+  .ip-val{color:var(--cyan);font-size:14px;font-weight:800;font-family:var(--mono);margin-top:3px}
+  .ip-val.gold{color:var(--gold)}
+  .manual-override{margin-top:16px;padding:14px;background:var(--card2);border:1px dashed var(--line);border-radius:12px}
+  .mo-title{color:var(--gold);font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+  .mo-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:flex-end}
+  .mo-field label{display:block;color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;margin-bottom:4px}
+  .mo-field input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--gold);padding:8px 10px;border-radius:6px;font-family:var(--mono);font-size:13px;font-weight:700}
+  .mo-field input:focus{outline:none;border-color:var(--gold)}
+  .mo-apply{background:var(--gold);color:#000;border:none;padding:8px 14px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:1px;cursor:pointer}
+  .mo-apply:hover{filter:brightness(1.15)}
+  .mo-hint{color:var(--muted);font-size:9px;font-family:var(--mono);margin-top:8px;line-height:1.4}
+  .projection-mini{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .pm-title{color:var(--muted);font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+  .pm-years{display:grid;grid-template-columns:repeat(5,1fr) 1.2fr;gap:4px}
+  .pm-yr{text-align:center;padding:6px 2px;background:var(--card2);border:1px solid var(--line);border-radius:6px}
+  .pm-yr.term{background:rgba(234,179,8,.08);border-color:rgba(234,179,8,.3)}
+  .pm-yr-lbl{color:var(--muted);font-size:9px;font-family:var(--mono)}
+  .pm-yr-val{color:var(--cyan);font-size:11px;font-weight:700;font-family:var(--mono);margin-top:2px}
+  .pm-yr.term .pm-yr-val{color:var(--gold)}
+  .pm-yr-tasa{color:var(--soft);font-size:8px;font-family:var(--mono);margin-top:1px}
   .dcf-result{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;justify-content:center}
   .result-final{text-align:center;padding-bottom:18px;border-bottom:1px solid var(--line)}
   .result-final-label{color:var(--cyan);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;font-family:var(--mono)}
@@ -298,32 +323,48 @@
 
     <div class="section">
       <div class="section-head">
-        <div class="section-title">⚡ VALORACIÓN</div>
-        <div class="section-h">DCF Buffett · Valor Intrínseco</div>
-        <div class="section-desc">Todos los datos se cargan automáticos. Solo ajustás el WACC.</div>
+        <div class="section-title">⚡ INVICTUS DCF · MÉTODO WARREN BUFFETT</div>
+        <div class="section-h">Valor Intrínseco con Fade Rate Sectorial</div>
+        <div class="section-desc">SGR = ROIC × Reinversión · Decay automático por sector (Damodaran NYU Stern) · Fórmula Jhon Román</div>
       </div>
       <div class="dcf-wrap">
         <div class="wacc-panel">
           <div class="wacc-explain">
-            <div class="we-title">¿Qué es el WACC?</div>
-            <div class="we-text">Es la <strong>tasa de exigencia</strong>: el retorno mínimo que le pedís a la empresa. Más alto = más conservador (castigás más el futuro). Buffett usa 9–11% para empresas sólidas. Movés el slider y el valor intrínseco se recalcula al instante.</div>
+            <div class="we-title">Método Invictus · Lo que ves</div>
+            <div class="we-text">El motor replica <strong>exactamente tu Excel INVICTUS DCF</strong>: crecimiento inicial = ROIC × Reinversión, luego decae año a año según el sector (Damodaran). <strong>Movés el WACC</strong> para ser más o menos exigente — Jhon usa 17% por defecto.</div>
           </div>
           <div class="wacc-value-display">
-            <div class="wvd-num" id="waccDisplay">10.0%</div>
-            <div class="wvd-label">Tasa de descuento aplicada</div>
+            <div class="wvd-num" id="waccDisplay">17.0%</div>
+            <div class="wvd-label">Tasa de descuento (WACC)</div>
           </div>
           <div class="slider-wrap">
-            <input type="range" id="waccSlider" min="6" max="15" step="0.5" value="10">
+            <input type="range" id="waccSlider" min="8" max="25" step="0.5" value="17">
             <div class="slider-marks">
-              <span>6% · agresivo</span>
-              <span>10% · Buffett</span>
-              <span>15% · ultra estricto</span>
+              <span>8% · suave</span>
+              <span>17% · Invictus</span>
+              <span>25% · ultra estricto</span>
             </div>
           </div>
           <div class="wacc-presets">
-            <button onclick="setWacc(8)">Conservador 8%</button>
             <button onclick="setWacc(10)">Buffett 10%</button>
-            <button onclick="setWacc(12)">Estricto 12%</button>
+            <button onclick="setWacc(17)">Invictus 17%</button>
+            <button onclick="setWacc(20)">Estricto 20%</button>
+          </div>
+          <div class="invictus-params" id="invictusParams"></div>
+          <div class="manual-override">
+            <div class="mo-title">🎛️ Ajuste manual (opcional · como en el Excel)</div>
+            <div class="mo-row">
+              <div class="mo-field">
+                <label>ROIC 5Y %</label>
+                <input type="number" id="manualRoic" placeholder="auto" step="0.1" min="0" max="100">
+              </div>
+              <div class="mo-field">
+                <label>Reinversión %</label>
+                <input type="number" id="manualReinv" placeholder="auto" step="1" min="0" max="100">
+              </div>
+              <button onclick="scanTicker()" class="mo-apply">APLICAR</button>
+            </div>
+            <div class="mo-hint">Dejar vacío = usa los datos auto · Llenar = sobrescribe (como analista profesional)</div>
           </div>
         </div>
         <div class="dcf-result">
@@ -337,6 +378,7 @@
             <div class="result-vs-item"><div class="lbl">M. Seguridad</div><div class="val" id="resMos">0%</div></div>
           </div>
           <div class="auto-note" id="autoNote">Datos automáticos: FCF, acciones y caja neta desde Yahoo Finance</div>
+          <div class="projection-mini" id="projectionMini"></div>
         </div>
       </div>
     </div>
@@ -433,7 +475,7 @@
 </div>
 
 <script>
-  let API_URL = localStorage.getItem('ub_api_url') || 'https://ub-scanner.onrender.com';
+  let API_URL = localStorage.getItem('ub_api_url') || '';
   document.getElementById('apiUrl').value = API_URL;
   if(API_URL) testApi();
   function saveApi(){
@@ -454,8 +496,9 @@
   function fmt(n,d=2){if(n===null||n===undefined||isNaN(n))return '--';return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})}
   function pct(n,d=2){if(n===null||n===undefined||isNaN(n))return '--';return Number(n).toFixed(d)+'%'}
   function fmtM(n){if(n===null||n===undefined||isNaN(n))return '--';return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:1})+'M'}
-  let DATA=null, WACC=10, DIV_YEARS=5, EPS_YEARS=5;
-  const G1=0.08, G2=0.04, GP=0.025;
+  let DATA=null, WACC=17, DIV_YEARS=5, EPS_YEARS=5;
+  // Método Invictus: tasa perpetua Gordon fija = 3%
+  const GP=0.03;
   function quickScan(t){document.getElementById('tickerInput').value=t;scanTicker()}
   async function scanTicker(){
     const t = document.getElementById('tickerInput').value.trim().toUpperCase();
@@ -471,7 +514,15 @@
     document.getElementById('results').className='results';
     document.getElementById('scanBtn').disabled=true;
     try{
-      const r = await fetch(`${API_URL}/stock/${t}`,{cache:'no-store'});
+      // Permite pasar ROIC manual si el usuario lo definió (Excel-like)
+      const manualRoic = parseFloat(document.getElementById('manualRoic')?.value) || null;
+      const manualReinv = parseFloat(document.getElementById('manualReinv')?.value) || null;
+      let url = `${API_URL}/stock/${t}`;
+      const params = [];
+      if(manualRoic !== null && manualRoic > 0) params.push('roic=' + (manualRoic/100));
+      if(manualReinv !== null && manualReinv > 0) params.push('reinv=' + (manualReinv/100));
+      if(params.length) url += '?' + params.join('&');
+      const r = await fetch(url,{cache:'no-store'});
       if(!r.ok){
         const err = await r.json().catch(()=>({detail:'Error desconocido'}));
         throw new Error(err.detail||`HTTP ${r.status}`);
@@ -559,6 +610,10 @@
       sig.innerHTML = '<div class="moat-signal" style="color:var(--muted)">No se detectaron señales financieras de ventaja competitiva</div>';
     }
   }
+  // ========================================================
+  // MÉTODO INVICTUS DCF — replica exacta del Excel de Jhon
+  // Fórmula: SGR = ROIC × Reinv · Fade rate sectorial año a año
+  // ========================================================
   function calcDCF(){
     if(!DATA)return;
     const fcf = DATA.fcf_base_m||0;
@@ -566,42 +621,138 @@
     const cash = DATA.net_cash_m||0;
     const market = DATA.price||0;
     const wacc = WACC/100;
-    let pvSum=0,lastFcf=fcf;
-    for(let y=1;y<=10;y++){
-      const g = y<=5?G1:G2;
-      lastFcf = lastFcf*(1+g);
-      pvSum += lastFcf/Math.pow(1+wacc,y);
+
+    // === INVICTUS DCF: datos del backend ===
+    const inv = DATA.invictus_dcf || {};
+    const roic5y = inv.roic_5y || 0.10;
+    const reinv = inv.reinvestment_rate != null ? inv.reinvestment_rate : 0.70;
+    const decay = inv.decay_rate || 0.07;
+    const gp = inv.tasa_perpetua || GP;
+
+    // 1. FCF por acción
+    const fcfPorAccion = shares>0 ? fcf/shares : 0;
+
+    // 2. SGR Inicial = ROIC × Reinversión
+    const sgrInicial = roic5y * reinv;
+
+    // 3. Proyección 5 años con FADE RATE (decae cada año)
+    const tasas = [sgrInicial];
+    for(let y=1; y<5; y++){
+      tasas.push(tasas[y-1] * (1 - decay));
     }
-    const tv = (lastFcf*(1+GP))/(wacc-GP);
-    const tvPv = tv/Math.pow(1+wacc,10);
-    const ev = pvSum+tvPv;
-    const equity = ev+cash;
-    const intrinsic = equity/shares;
-    const diff = intrinsic-market;
-    const mos = market>0?((intrinsic-market)/intrinsic)*100:0;
+
+    // 4. FCF por acción proyectado
+    const fcfProy = [fcfPorAccion];
+    for(let y=0; y<5; y++){
+      fcfProy.push(fcfProy[y] * (1 + tasas[y]));
+    }
+
+    // 5. FCF terminal (año 6) con tasa perpetua
+    const fcfTerminal = fcfProy[5] * (1 + gp);
+
+    // 6. Valores presentes
+    let vpTotal = 0;
+    const vps = [];
+    for(let y=1; y<=5; y++){
+      const vp = fcfProy[y] / Math.pow(1+wacc, y);
+      vps.push(vp);
+      vpTotal += vp;
+    }
+
+    // 7. Valor terminal con Gordon, descontado a año 5
+    let vpTerminal = 0;
+    if(wacc > gp){
+      const terminalRaw = fcfTerminal / (wacc - gp);
+      vpTerminal = terminalRaw / Math.pow(1+wacc, 5);
+      vpTotal += vpTerminal;
+    }
+
+    // 8. Valor intrínseco (sumamos caja neta por acción)
+    const cashPerShare = shares>0 ? cash/shares : 0;
+    const intrinsic = vpTotal + cashPerShare;
+    const diff = intrinsic - market;
+    const mos = market>0 ? ((intrinsic-market)/intrinsic)*100 : 0;
+
+    // === RENDER ===
     document.getElementById('intrinsicVal').textContent = fmt(intrinsic);
     document.getElementById('resMarket').textContent = fmt(market);
     document.getElementById('resDiff').textContent = (diff>=0?'+':'')+fmt(diff);
     document.getElementById('resDiff').style.color = diff>=0?'var(--green)':'var(--red)';
     document.getElementById('resMos').textContent = mos.toFixed(1)+'%';
-    document.getElementById('resMos').style.color = mos>=20?'var(--green)':mos>=0?'var(--yellow)':'var(--red)';
+    document.getElementById('resMos').style.color = mos>=40?'var(--gold)':mos>=20?'var(--green)':mos>=0?'var(--yellow)':'var(--red)';
     document.getElementById('mosVal').textContent = mos.toFixed(1)+'%';
-    document.getElementById('mosVal').style.color = mos>=20?'var(--green)':mos>=0?'var(--yellow)':'var(--red)';
+    document.getElementById('mosVal').style.color = mos>=40?'var(--gold)':mos>=20?'var(--green)':mos>=0?'var(--yellow)':'var(--red)';
+
+    // === VEREDICTO INVICTUS · 4 NIVELES ===
     const dEl = document.getElementById('decisionBig');
     const dReason = document.getElementById('decisionReason');
-    dEl.classList.remove('buy','wait','avoid');
-    if(intrinsic<=0||!isFinite(intrinsic)){
-      dEl.textContent='NO COMPRES';dEl.classList.add('avoid');
-      dReason.textContent='FCF negativo o datos insuficientes. No apta para DCF Buffett.';
-    }else if(mos>=20){
-      dEl.textContent='COMPRA';dEl.classList.add('buy');
-      dReason.textContent=`Margen ≥ 20%. Cumple regla Invictus. Descontada ${mos.toFixed(0)}% bajo su valor real.`;
-    }else if(mos>=0){
-      dEl.textContent='ESPERA';dEl.classList.add('wait');
-      dReason.textContent=`Margen positivo (${mos.toFixed(1)}%) pero menor a 20%. Esperá mejor precio.`;
-    }else{
-      dEl.textContent='NO COMPRES';dEl.classList.add('avoid');
-      dReason.textContent=`Sobrevalorada ${Math.abs(mos).toFixed(1)}% sobre su valor intrínseco.`;
+    dEl.classList.remove('buy','wait','avoid','gold');
+    if(intrinsic<=0 || !isFinite(intrinsic)){
+      dEl.textContent='NO COMPRES';
+      dEl.classList.add('avoid');
+      dReason.textContent='FCF negativo o datos insuficientes para el modelo Invictus.';
+    } else if(mos >= 0.40 * 100){
+      dEl.textContent='💎 CARGAR';
+      dEl.classList.add('gold');
+      dReason.textContent=`💎 OPORTUNIDAD EXCEPCIONAL. Margen ${mos.toFixed(0)}% supera el 40%. Caso excepcional del Método Invictus.`;
+    } else if(mos >= 20){
+      dEl.textContent='COMPRA';
+      dEl.classList.add('buy');
+      dReason.textContent=`🟢 BUENA OPORTUNIDAD. Margen ${mos.toFixed(0)}% cumple regla Invictus de 20% mínimo.`;
+    } else if(mos >= 0){
+      dEl.textContent='ESPERA';
+      dEl.classList.add('wait');
+      dReason.textContent=`🟡 PRECIO JUSTO. Margen ${mos.toFixed(1)}% insuficiente (mínimo Invictus: 20%).`;
+    } else {
+      dEl.textContent='NO COMPRES';
+      dEl.classList.add('avoid');
+      dReason.textContent=`🔴 SOBREVALORADA. Precio ${Math.abs(mos).toFixed(0)}% sobre valor intrínseco.`;
+    }
+
+    // === PANEL INVICTUS PARAMS ===
+    const paramsEl = document.getElementById('invictusParams');
+    if(paramsEl){
+      paramsEl.innerHTML = `
+        <div class="ip-item">
+          <div class="ip-lbl">Sector Invictus</div>
+          <div class="ip-val">${DATA.sector_invictus||'--'}</div>
+        </div>
+        <div class="ip-item">
+          <div class="ip-lbl">Decay Rate (Damodaran)</div>
+          <div class="ip-val gold">${(decay*100).toFixed(1)}%</div>
+        </div>
+        <div class="ip-item">
+          <div class="ip-lbl">ROIC 5Y</div>
+          <div class="ip-val">${(roic5y*100).toFixed(1)}%</div>
+        </div>
+        <div class="ip-item">
+          <div class="ip-lbl">Reinversión (1-Payout)</div>
+          <div class="ip-val">${(reinv*100).toFixed(0)}%</div>
+        </div>
+        <div class="ip-item" style="grid-column:span 2">
+          <div class="ip-lbl">SGR Inicial = ROIC × Reinv</div>
+          <div class="ip-val gold">${(sgrInicial*100).toFixed(2)}% año 1 → decae ${(decay*100).toFixed(0)}%/año</div>
+        </div>
+      `;
+    }
+
+    // === PROYECCIÓN MINI (barras años 1-5 + terminal) ===
+    const projEl = document.getElementById('projectionMini');
+    if(projEl){
+      let html = '<div class="pm-title">📈 FCF/acción proyectado · 5 años + terminal</div><div class="pm-years">';
+      for(let y=1; y<=5; y++){
+        html += `<div class="pm-yr">
+          <div class="pm-yr-lbl">Año ${y}</div>
+          <div class="pm-yr-val">${fmt(fcfProy[y])}</div>
+          <div class="pm-yr-tasa">+${(tasas[y-1]*100).toFixed(1)}%</div>
+        </div>`;
+      }
+      html += `<div class="pm-yr term">
+        <div class="pm-yr-lbl">Terminal</div>
+        <div class="pm-yr-val">${fmt(fcfTerminal)}</div>
+        <div class="pm-yr-tasa">+${(gp*100).toFixed(1)}%</div>
+      </div></div>`;
+      projEl.innerHTML = html;
     }
   }
   function setWacc(v){
